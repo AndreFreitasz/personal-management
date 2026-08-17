@@ -1,0 +1,87 @@
+name: managment-finances
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: finances-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USERNAME:-finances}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-finances}
+      POSTGRES_DB: ${DB_DATABASE:-finances}
+    ports:
+      - '${DB_PORT:-5432}:5432'
+    volumes:
+      - finances-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${DB_USERNAME:-finances} -d ${DB_DATABASE:-finances}',
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      target: development
+    container_name: finances-backend
+    restart: unless-stopped
+    command: npm run start:dev -- --path tsconfig.docker.json
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: ${DB_USERNAME:-finances}
+      DB_PASSWORD: ${DB_PASSWORD:-finances}
+      DB_DATABASE: ${DB_DATABASE:-finances}
+      DB_LOGGING: ${DB_LOGGING:-false}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-dev-only-access-secret-troque-em-producao}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-dev-only-refresh-secret-troque-em-producao}
+      JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-15m}
+      REFRESH_TTL_DAYS: ${REFRESH_TTL_DAYS:-30}
+      PASSWORD_RESET_TTL_MINUTES: ${PASSWORD_RESET_TTL_MINUTES:-30}
+      APP_URL: ${APP_URL:-http://localhost:5173}
+    ports:
+      - '${API_PORT:-3000}:3000'
+    volumes:
+      - ./backend:/app
+      - backend-node-modules:/app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -q -O /dev/null http://localhost:3000/api/health']
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  frontend:
+    build:
+      context: ./frontend
+      target: development
+    container_name: finances-frontend
+    restart: unless-stopped
+    command: npm run dev -- --host 0.0.0.0
+    environment:
+      NODE_ENV: development
+      VITE_API_URL: ${VITE_API_URL:-}
+      VITE_PROXY_TARGET: http://backend:3000
+      VITE_USE_POLLING: 'true'
+    ports:
+      - '${WEB_PORT:-5173}:5173'
+    volumes:
+      - ./frontend:/app
+      - frontend-node-modules:/app/node_modules
+    depends_on:
+      - backend
+
+volumes:
+  finances-pgdata:
+  backend-node-modules:
+  frontend-node-modules:

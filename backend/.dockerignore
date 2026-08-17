@@ -1,0 +1,16 @@
+node_modules
+dist
+coverage
+*.tsbuildinfo
+
+.env
+.env.local
+.env.*.local
+
+*.log
+.git
+.gitignore
+Dockerfile
+.dockerignore
+docker-compose*.yml
+CLAUDE.md
