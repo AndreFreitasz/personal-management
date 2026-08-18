@@ -5,12 +5,19 @@ import { Banknote } from '@/components/banknote';
 import { Button, Field, Input } from '@/components/ui';
 import { ALL_PLATES, BLANK_PLATES, initialsFromEmail, serialFrom } from '@/lib/note';
 import { login } from '@/lib/session';
+import { emailError, passwordError } from '@/lib/validation';
 import { AuthShell, PressStatus } from './auth-shell';
+
+interface FieldErrors {
+  email?: string;
+  password?: string;
+}
 
 export function LoginPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -20,9 +27,25 @@ export function LoginPage() {
   const initials = initialsFromEmail(email);
   const serial = serialFrom(email);
 
+  function clearFieldError(field: keyof FieldErrors) {
+    setFieldErrors((prev) => (prev[field] ? { ...prev, [field]: undefined } : prev));
+  }
+
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     setError(null);
+
+    const errors: FieldErrors = {
+      email: emailError(email),
+      password: passwordError(password),
+    };
+
+    if (errors.email ?? errors.password) {
+      setFieldErrors(errors);
+      return;
+    }
+
+    setFieldErrors({});
     setPending(true);
 
     try {
@@ -76,7 +99,7 @@ export function LoginPage() {
       }
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
-        <Field label="E-mail">
+        <Field label="E-mail" error={fieldErrors.email}>
           {(id) => (
             <Input
               id={id}
@@ -84,13 +107,17 @@ export function LoginPage() {
               type="email"
               autoComplete="email"
               required
+              aria-invalid={fieldErrors.email ? true : undefined}
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                clearFieldError('email');
+              }}
             />
           )}
         </Field>
 
-        <Field label="Senha">
+        <Field label="Senha" error={fieldErrors.password}>
           {(id) => (
             <Input
               id={id}
@@ -98,8 +125,12 @@ export function LoginPage() {
               type="password"
               autoComplete="current-password"
               required
+              aria-invalid={fieldErrors.password ? true : undefined}
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                clearFieldError('password');
+              }}
             />
           )}
         </Field>

@@ -17,7 +17,13 @@ export class ApiError extends Error {
 function messageOf(body: unknown, fallback: string): string {
   if (typeof body === 'object' && body !== null && 'message' in body) {
     const message = (body as { message: unknown }).message;
-    if (Array.isArray(message)) return message.join('. ');
+    if (Array.isArray(message)) {
+      return message
+        .map((item) => String(item).trim())
+        .filter(Boolean)
+        .map((item) => (/[.!?]$/.test(item) ? item : `${item}.`))
+        .join(' ');
+    }
     if (typeof message === 'string') return message;
   }
   return fallback;

@@ -11,7 +11,16 @@ import {
   type Plates,
 } from '@/lib/note';
 import { register } from '@/lib/session';
+import { emailError, nameError, passwordError } from '@/lib/validation';
 import { AuthShell, PressStatus } from './auth-shell';
+
+const PASSWORD_MIN = 8;
+
+interface FieldErrors {
+  name?: string;
+  email?: string;
+  password?: string;
+}
 
 function strengthOf(password: string): { level: 0 | 1 | 2 | 3 | 4; label: string } {
   if (password.length === 0) return { level: 0, label: 'Mínimo de 8 caracteres' };
@@ -75,6 +84,7 @@ export function RegisterPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -92,9 +102,26 @@ export function RegisterPage() {
   const done = platesDone(plates);
   const eyebrow = done === 0 ? 'Cédula em branco' : done === 4 ? 'Cédula pronta' : 'Em impressão';
 
+  function clearFieldError(field: keyof FieldErrors) {
+    setFieldErrors((prev) => (prev[field] ? { ...prev, [field]: undefined } : prev));
+  }
+
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     setError(null);
+
+    const errors: FieldErrors = {
+      name: nameError(name),
+      email: emailError(email),
+      password: passwordError(password, PASSWORD_MIN),
+    };
+
+    if (errors.name ?? errors.email ?? errors.password) {
+      setFieldErrors(errors);
+      return;
+    }
+
+    setFieldErrors({});
     setPending(true);
 
     try {
@@ -134,20 +161,24 @@ export function RegisterPage() {
       }
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
-        <Field label="Nome">
+        <Field label="Nome" error={fieldErrors.name}>
           {(id) => (
             <Input
               id={id}
               size="lg"
               autoComplete="name"
               required
+              aria-invalid={fieldErrors.name ? true : undefined}
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => {
+                setName(e.target.value);
+                clearFieldError('name');
+              }}
             />
           )}
         </Field>
 
-        <Field label="E-mail">
+        <Field label="E-mail" error={fieldErrors.email}>
           {(id) => (
             <Input
               id={id}
@@ -155,13 +186,17 @@ export function RegisterPage() {
               type="email"
               autoComplete="email"
               required
+              aria-invalid={fieldErrors.email ? true : undefined}
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                clearFieldError('email');
+              }}
             />
           )}
         </Field>
 
-        <Field label="Senha" hint={strength.label}>
+        <Field label="Senha" hint={strength.label} error={fieldErrors.password}>
           {(id) => (
             <Input
               id={id}
@@ -169,9 +204,13 @@ export function RegisterPage() {
               type="password"
               autoComplete="new-password"
               required
-              minLength={8}
+              minLength={PASSWORD_MIN}
+              aria-invalid={fieldErrors.password ? true : undefined}
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                clearFieldError('password');
+              }}
             />
           )}
         </Field>
