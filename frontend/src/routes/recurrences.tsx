@@ -156,6 +156,7 @@ export function RecurrencesPage() {
       ...(category ? { categoryId: category } : {}),
       ...(endMode === 'until' && endsOn ? { endsOn } : {}),
       ...(endMode === 'installments' && installments ? { installments: Number(installments) } : {}),
+      ...(type === 'debit' ? { autoDebit: data.get('autoDebit') === 'on' } : {}),
     });
   }
 
@@ -320,6 +321,24 @@ export function RecurrencesPage() {
               </Field>
             )}
 
+            {type === 'debit' && (
+              <label className="text-ink flex items-start gap-2.5 text-sm sm:col-span-2 lg:col-span-3">
+              <input
+                type="checkbox"
+                name="autoDebit"
+                className="accent-primary mt-0.5 size-4 shrink-0"
+                
+              />
+              <span>
+                Débito automático
+                <span className="text-ink-muted mt-0.5 block text-xs">
+                  Sai da conta na data, sem confirmação. Desmarcado, o gasto nasce previsto e
+                  você confirma com “Dar baixa” na lista de lançamentos.
+                </span>
+              </span>
+            </label>
+            )}
+
             {create.isError && (
               <p role="alert" className="text-negative text-sm sm:col-span-2 lg:col-span-3">
                 {create.error instanceof Error ? create.error.message : 'Erro ao criar.'}
@@ -390,6 +409,7 @@ export function RecurrencesPage() {
                           <span className="italic">Sem categoria</span>
                         )}
                         {account && <span>· {account.name}</span>}
+                        {recurrence.autoDebit && <span>· Débito automático</span>}
                       </p>
                     </div>
 
@@ -523,6 +543,7 @@ function EditRecurrenceForm({
       dayOfMonth: scheduleType === 'day_of_month' ? Number(data.get('dayOfMonth')) : null,
       adjustment: String(data.get('adjustment')) as Adjustment,
       ...(recurrence.installments === null ? { endsOn: endsOn || null } : {}),
+      ...(recurrence.type === 'debit' ? { autoDebit: data.get('autoDebit') === 'on' } : {}),
     });
   }
 
@@ -616,6 +637,24 @@ function EditRecurrenceForm({
               <MonthField id={id} name="endsOn" defaultValue={recurrence.endsOn ?? ''} />
             )}
           </Field>
+        )}
+
+        {recurrence.type === 'debit' && (
+          <label className="text-ink flex items-start gap-2.5 text-sm sm:col-span-2 lg:col-span-3">
+              <input
+                type="checkbox"
+                name="autoDebit"
+                className="accent-primary mt-0.5 size-4 shrink-0"
+                defaultChecked={recurrence.autoDebit}
+              />
+              <span>
+                Débito automático
+                <span className="text-ink-muted mt-0.5 block text-xs">
+                  Sai da conta na data, sem confirmação. Desmarcado, o gasto nasce previsto e
+                  você confirma com “Dar baixa” na lista de lançamentos.
+                </span>
+              </span>
+            </label>
         )}
 
         {error !== null && error !== undefined && (

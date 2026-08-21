@@ -65,6 +65,9 @@ export class Recurrence extends BaseEntity {
   @Column({ type: 'smallint', nullable: true })
   installments!: number | null;
 
+  @Column({ name: 'auto_debit', type: 'boolean', default: false })
+  autoDebit!: boolean;
+
   @Column({ name: 'paused_at', type: 'timestamptz', nullable: true })
   pausedAt!: Date | null;
 }

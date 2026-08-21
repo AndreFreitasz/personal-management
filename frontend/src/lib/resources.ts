@@ -191,8 +191,12 @@ export const updateTransaction = (
     accountId?: string;
     destinationAccountId?: string | null;
     categoryId?: string | null;
+    status?: TransactionStatus;
   },
 ) => patch<Transaction>(`/transactions/${id}`, body);
+
+export const settleTransaction = (id: string, paid: boolean) =>
+  updateTransaction(id, { status: paid ? 'paid' : 'pending' });
 
 export const deleteTransaction = (id: string) => del(`/transactions/${id}`);
 export const categorizeTransaction = (id: string, categoryId: string | null) =>
@@ -216,6 +220,7 @@ export interface Recurrence {
   startsOn: string;
   endsOn: string | null;
   installments: number | null;
+  autoDebit: boolean;
   paused: boolean;
   materializedCount: number;
 }
@@ -266,6 +271,7 @@ export const createRecurrence = (body: {
   startsOn: string;
   endsOn?: string;
   installments?: number;
+  autoDebit?: boolean;
 }) => post<Recurrence>('/recurrences', body);
 
 export const updateRecurrence = (
@@ -277,6 +283,7 @@ export const updateRecurrence = (
     dayOfMonth?: number | null;
     adjustment?: Adjustment;
     endsOn?: string | null;
+    autoDebit?: boolean;
   },
 ) => patch<Recurrence>(`/recurrences/${id}`, body);
 

@@ -29,6 +29,7 @@ const AUDITED_FIELDS = [
   'accountId',
   'destinationAccountId',
   'categoryId',
+  'status',
 ] as const;
 
 @Injectable()
@@ -147,6 +148,7 @@ export class TransactionsService {
 
     if (dto.amount !== undefined) current.amount = dto.amount;
     if (dto.description !== undefined) current.description = dto.description;
+    if (dto.status !== undefined) current.status = dto.status;
     if (dto.occurredAt !== undefined) {
       current.occurredAt = new Date(dto.occurredAt);
       current.competence = competenceOf(current.occurredAt);

@@ -81,6 +81,7 @@ export class RecurrencesService {
 
     await this.assertCategoryUsable(userId, dto.categoryId ?? null, dto.type);
     assertScheduleShape(dto.scheduleType, dto.dayOfMonth ?? null);
+    assertAutoDebitShape(dto.type, dto.autoDebit ?? false);
 
     const startsOn = parseCompetence(dto.startsOn);
     const endsOn = dto.endsOn ? parseCompetence(dto.endsOn) : null;
@@ -112,6 +113,7 @@ export class RecurrencesService {
           startsOn,
           endsOn,
           installments: dto.installments ?? null,
+          autoDebit: dto.autoDebit ?? false,
         }),
       );
 
@@ -164,6 +166,11 @@ export class RecurrencesService {
 
     if (dto.description !== undefined) recurrence.description = dto.description;
     if (dto.adjustment !== undefined) recurrence.adjustment = dto.adjustment;
+
+    if (dto.autoDebit !== undefined) {
+      assertAutoDebitShape(recurrence.type, dto.autoDebit);
+      recurrence.autoDebit = dto.autoDebit;
+    }
 
     if (dto.endsOn !== undefined) {
       const endsOn = dto.endsOn === null ? null : parseCompetence(dto.endsOn);
@@ -422,7 +429,7 @@ export class RecurrencesService {
       description: describe(recurrence, competence),
       occurredAt: new Date(`${occurredOn}T00:00:00.000Z`),
       competence,
-      status: statusFor(recurrence.type),
+      status: statusFor(recurrence),
     });
 
     const saved = await manager.save(Transaction, transaction);
@@ -438,8 +445,15 @@ export class RecurrencesService {
   }
 }
 
-function statusFor(type: TransactionType): TransactionStatus {
-  return type === TransactionType.Debit ? TransactionStatus.Pending : TransactionStatus.Paid;
+function statusFor(recurrence: Recurrence): TransactionStatus {
+  if (recurrence.type !== TransactionType.Debit) return TransactionStatus.Paid;
+  return recurrence.autoDebit ? TransactionStatus.Paid : TransactionStatus.Pending;
+}
+
+function assertAutoDebitShape(type: TransactionType, autoDebit: boolean): void {
+  if (autoDebit && type !== TransactionType.Debit) {
+    throw new BadRequestException('Debito automatico so vale para gasto recorrente.');
+  }
 }
 
 function assertScheduleShape(scheduleType: ScheduleType, dayOfMonth: number | null): void {

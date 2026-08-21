@@ -76,6 +76,10 @@ export class CreateRecurrenceDto {
   @Min(1)
   @Max(480, { message: 'Parcelamento acima de 40 anos e' + ' quase sempre erro de digitacao.' })
   installments?: number;
+
+  @IsOptional()
+  @IsBoolean({ message: 'autoDebit deve ser true ou false.' })
+  autoDebit?: boolean;
 }
 
 export class UpdateRecurrenceDto {
@@ -107,6 +111,10 @@ export class UpdateRecurrenceDto {
   @IsOptional()
   @Matches(COMPETENCE, { message: 'endsOn no formato AAAA-MM.' })
   endsOn?: string | null;
+
+  @IsOptional()
+  @IsBoolean({ message: 'autoDebit deve ser true ou false.' })
+  autoDebit?: boolean;
 }
 
 export class AdjustAmountDto {
@@ -155,6 +163,7 @@ export class RecurrenceResponseDto {
   startsOn!: string;
   endsOn!: string | null;
   installments!: number | null;
+  autoDebit!: boolean;
   paused!: boolean;
   materializedCount!: number;
 
@@ -178,6 +187,7 @@ export class RecurrenceResponseDto {
       startsOn: recurrence.startsOn.slice(0, 7),
       endsOn: recurrence.endsOn?.slice(0, 7) ?? null,
       installments: recurrence.installments,
+      autoDebit: recurrence.autoDebit,
       paused: recurrence.pausedAt !== null,
       materializedCount,
     };

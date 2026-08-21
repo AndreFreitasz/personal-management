@@ -33,6 +33,7 @@ import {
   listAccounts,
   listCategories,
   listTransactions,
+  settleTransaction,
   TRANSACTION_TYPE_HINT,
   TRANSACTION_TYPE_LABEL,
   updateTransaction,
@@ -283,6 +284,11 @@ export function TransactionsPage() {
     onSuccess: invalidate,
   });
 
+  const settle = useMutation({
+    mutationFn: ({ id, paid }: { id: string; paid: boolean }) => settleTransaction(id, paid),
+    onSuccess: invalidate,
+  });
+
   const edit = useMutation({
     mutationFn: ({ id, body }: { id: string; body: Parameters<typeof updateTransaction>[1] }) =>
       updateTransaction(id, body),
@@ -356,6 +362,11 @@ export function TransactionsPage() {
                 <span className="italic">Sem categoria</span>
               )}
               {account && <span>· {account.name}</span>}
+              {transaction.status === 'pending' && (
+                <span className="border-border text-ink-muted rounded-full border px-2 py-0.5 text-xs font-normal">
+                  Previsto
+                </span>
+              )}
             </p>
           </div>
 
@@ -369,6 +380,17 @@ export function TransactionsPage() {
             </p>
 
             <div className="flex gap-1">
+              {transaction.status === 'pending' && (
+                <Button
+                  variant="ghost"
+                  onClick={() => settle.mutate({ id: transaction.id, paid: true })}
+                  disabled={settle.isPending}
+                  title="Confirmar que este gasto saiu da conta"
+                >
+                  Dar baixa
+                </Button>
+              )}
+
               <Button
                 variant="ghost"
                 onClick={() =>

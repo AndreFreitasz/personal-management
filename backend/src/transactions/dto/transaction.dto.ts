@@ -105,6 +105,10 @@ export class UpdateTransactionDto {
   @IsOptional()
   @IsUUID()
   categoryId?: string | null;
+
+  @IsOptional()
+  @IsEnum(TransactionStatus, { message: 'status deve ser pending ou paid.' })
+  status?: TransactionStatus;
 }
 
 export class CategorizeTransactionDto {
