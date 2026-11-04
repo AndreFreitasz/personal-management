@@ -174,6 +174,27 @@ variável de ambiente (`VITE_PROXY_TARGET`, `VITE_USE_POLLING`), sem tocar no
 > nomeado — e `--build` também não basta, porque o volume sobrepõe o
 > `node_modules` da imagem.
 
+## Deploy
+
+O frontend é publicado no Render como **Static Site**, com deploy automático a
+cada commit na `main`. Em produção não há proxy: o bundle chama a API direto,
+pela `VITE_API_URL` (embutida em tempo de build, então mudar o valor exige um
+novo deploy).
+
+| Campo         | Valor                                                    |
+| ------------- | -------------------------------------------------------- |
+| Root          | `frontend`                                               |
+| Build         | `npm ci && npm run build && cp dist/index.html dist/404.html` |
+| Publish       | `dist`                                                   |
+| Env           | `VITE_API_URL=https://personal-management-backend.onrender.com` |
+
+O `cp ... 404.html` faz o papel do fallback de SPA: o Render serve o `404.html`
+para qualquer rota que não seja um arquivo, então recarregar `/lancamentos`
+abre o app em vez de uma página de erro.
+
+Toda origem que serve o frontend precisa estar em `CORS_ORIGINS` no backend,
+senão o navegador bloqueia as chamadas.
+
 ### Comandos
 
 ```bash
