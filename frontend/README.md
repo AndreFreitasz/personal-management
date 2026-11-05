@@ -176,21 +176,24 @@ variável de ambiente (`VITE_PROXY_TARGET`, `VITE_USE_POLLING`), sem tocar no
 
 ## Deploy
 
-O frontend é publicado no Render como **Static Site**, com deploy automático a
-cada commit na `main`. Em produção não há proxy: o bundle chama a API direto,
-pela `VITE_API_URL` (embutida em tempo de build, então mudar o valor exige um
-novo deploy).
+O frontend é publicado no **GitHub Pages**, em `https://mirantefinanceiro.online`,
+pelo workflow [deploy-frontend.yml](../.github/workflows/deploy-frontend.yml): todo
+push na `main` que mexa em `frontend/` gera um novo deploy. Em produção não há
+proxy: o bundle chama a API direto, pela `VITE_API_URL` definida no workflow
+(embutida em tempo de build, então mudar o valor exige um novo deploy).
 
-| Campo         | Valor                                                    |
-| ------------- | -------------------------------------------------------- |
-| Root          | `frontend`                                               |
-| Build         | `npm ci && npm run build && cp dist/index.html dist/404.html` |
-| Publish       | `dist`                                                   |
-| Env           | `VITE_API_URL=https://personal-management-backend.onrender.com` |
+| Onde                     | Valor                                                        |
+| ------------------------ | ------------------------------------------------------------ |
+| Settings → Pages, Source | `GitHub Actions`                                             |
+| Custom domain            | `mirantefinanceiro.online`, com **Enforce HTTPS**            |
+| DNS da raiz              | `A` para `185.199.108.153`, `.109.153`, `.110.153`, `.111.153` |
+| DNS do `www`             | `CNAME` para `andrefreitasz.github.io`                       |
 
-O `cp ... 404.html` faz o papel do fallback de SPA: o Render serve o `404.html`
-para qualquer rota que não seja um arquivo, então recarregar `/lancamentos`
-abre o app em vez de uma página de erro.
+O workflow copia `index.html` para `404.html`, que faz o papel do fallback de
+SPA: o Pages serve o `404.html` para qualquer rota que não seja um arquivo, então
+recarregar `/lancamentos` abre o app em vez de uma página de erro. O efeito
+colateral é que essas rotas respondem com status 404, então robôs de prévia de
+link (LinkedIn, WhatsApp) só montam o cartão da raiz.
 
 Toda origem que serve o frontend precisa estar em `CORS_ORIGINS` no backend,
 senão o navegador bloqueia as chamadas.
